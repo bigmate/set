@@ -1,8 +1,6 @@
-package slice
+package set
 
-import "golang.org/x/exp/constraints"
-
-type Set[T constraints.Ordered] interface {
+type Set[T comparable] interface {
 	Add(el T)
 	Del(el T)
 	Has(el T) bool
@@ -10,11 +8,11 @@ type Set[T constraints.Ordered] interface {
 	Els() []T
 }
 
-func NewSet[T constraints.Ordered](size int) Set[T] {
+func New[T comparable](size int) Set[T] {
 	return make(set[T], size)
 }
 
-func FromSlice[T constraints.Ordered](els ...T) Set[T] {
+func FromSlice[T comparable](els ...T) Set[T] {
 	s := make(set[T], len(els))
 
 	for _, el := range els {
@@ -24,7 +22,7 @@ func FromSlice[T constraints.Ordered](els ...T) Set[T] {
 	return s
 }
 
-type set[T constraints.Ordered] map[T]struct{}
+type set[T comparable] map[T]struct{}
 
 func (s set[T]) Add(el T) {
 	s[el] = struct{}{}
@@ -51,4 +49,33 @@ func (s set[T]) Els() []T {
 	}
 
 	return els
+}
+
+func extract[T comparable](a, b, c Set[T], hasFlip bool) {
+	els := b.Els()
+
+	for i := range els {
+		k := els[i]
+
+		if a.Has(k) == hasFlip {
+			c.Add(k)
+		}
+	}
+}
+
+func Intersection[T comparable](a, b Set[T]) Set[T] {
+	res := New[T](0)
+
+	extract(a, b, res, true)
+
+	return res
+}
+
+func Difference[T comparable](a, b Set[T]) Set[T] {
+	res := New[T](0)
+
+	extract(a, b, res, false)
+	extract(b, a, res, false)
+
+	return res
 }
